@@ -38,7 +38,7 @@ async def track_video(
 
         results = model.track(frame, conf=confidence, persist=True, verbose=False)[0]
         tracks = []
-        for box in results.boxes:
+        for box in results.boxes or []:
             track_id = int(box.id[0]) if box.id is not None else -1
             x1, y1, x2, y2 = box.xyxy[0].tolist()
             tracks.append(
@@ -65,8 +65,8 @@ async def track_stream(websocket: WebSocket):
     Server sends: JSON { tracks, annotated_image }
     """
     await websocket.accept()
-    current_model_name = None
-    model = None
+    current_model_name: str | None = None
+    model = get_model("yolov8n")
 
     try:
         while True:
@@ -88,7 +88,7 @@ async def track_stream(websocket: WebSocket):
             results = model.track(frame, conf=confidence, persist=True, verbose=False)[0]
 
             tracks = []
-            for box in results.boxes:
+            for box in results.boxes or []:
                 track_id = int(box.id[0]) if box.id is not None else -1
                 x1, y1, x2, y2 = box.xyxy[0].tolist()
                 tracks.append(
