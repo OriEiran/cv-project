@@ -61,9 +61,18 @@ export function WebcamTrack({ models }: Props) {
         frameCount.current++;
       };
 
-      ws.onerror = () => setError("WebSocket error. Is the backend running?");
+      ws.onerror = () => setError("WebSocket error — check backend terminal for details.");
+      ws.onclose = (e) => {
+        if (e.code !== 1000) {
+          setError(`WebSocket closed unexpectedly (code ${e.code}). Check backend terminal.`);
+          setRunning(false);
+        }
+      };
 
-      await new Promise<void>((res) => { ws.onopen = () => res(); });
+      await new Promise<void>((res, rej) => {
+        ws.onopen = () => res();
+        ws.onerror = () => rej(new Error("WebSocket failed to connect"));
+      });
 
       fpsTimer.current = window.setInterval(() => {
         setFps(frameCount.current);
